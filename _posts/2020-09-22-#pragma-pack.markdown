@@ -24,4 +24,4 @@ min(sizeof(member), n)
 该指令将n字节对齐压入栈，保证之后的字节对齐都为n字节。
 
 (4) `#pragma pack (pop)`
-该指令弹出栈中的n字节对齐，恢复之前的字节对齐数目。一般和#pragma pack (push, n) 一起使用。
+该指令弹出栈中的n字节对齐，恢复之前的字节对齐数目。一般和`#pragma pack (push, n)` 一起使用。

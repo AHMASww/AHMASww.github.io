@@ -68,5 +68,27 @@ data = "00010203"
 通过抓包可以看到获取的数据是以太网数据头协议的包，长度只有4，和发出去的是一致的内容，通常，这里需要自己构造协议头。
 
 ### WinPcapy发送数据例子
+```python
+from winpcapy import WinPcapDevices
+from winpcapy import WinPcapUtils
+import time
 
+if __name__ == "__main__":
+    while True:
+        WinPcapUtils.send_packet("*R*", bytes.fromhex("00010203"))
+        time.sleep(1)
+```
 ### WinPcapy接收数据例子
+```python
+from winpcapy import WinPcapDevices
+from winpcapy import WinPcapUtils
+
+
+def packet_callback(win_pcap, param, header, pkt_data):
+    if len(pkt_data) == 4:
+        print(pkt_data)
+
+if __name__ == "__main__":
+    WinPcapUtils.capture_on("*R*", packet_callback)
+```
+这里`capture_on`或者`capture_on_device_name`方法会自动持续捕获数据包，网卡的通配符需要根据自己的实际情况写。
