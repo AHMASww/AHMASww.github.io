@@ -1,0 +1,72 @@
+---
+layout: post
+title:  "WinPcapy简单使用"
+date:   2020-11-30 13:07:00 +0800
+categories: jekyll update
+---
+### 安装WinPcapy
+```python
+pip install WinPcapy
+```
+### WinPcapy获取本机网卡
+首先需要到导入`WinPcapDevices`：
+```python
+from winpcapy import WinPcapDevices
+```
+然后只需要：
+```python
+devices = WinPcapDevices.list_devices()
+```
+`devices`是类似字典的格式，键值对应的是本机上具体的一个网卡，但是存在真实网卡和虚拟网卡。根据不同发送接收函数调用，会用上`devices`中的键或者值。
+
+### WinPcapy捕获数据
+首先需要导入`WinPcapUtils`
+```python
+from winpcapy import WinPcapUtils
+```
+
+目前，我使用过的方法有两种：
+```python
+def capture_on_device_name(device_name, callback)
+``` 
+该函数参数`device_name`表示的是具体的某个网卡，在`devices`中是用键来表示的，`callback`参数表示是回调函数，处理捕获到的数据包。所以可以这样写：
+```python
+keys_list = list(devices.keys())
+WinPcapUtils.capture_on_device_name(keys_list[0], packet_callback)
+```
+
+第二种方法是:
+```python
+def capture_on(pattern, callback)
+```
+该函数参数`pattern`表示通配符，用来匹配`devices`中值所对应的内容，`callback`参数表示回调函数，仍然是处理捕获的到数据包。所以可以这样写：
+```python
+WinPcapUtils.capture_on("*Inte*", packet_callback)
+```
+
+两个函数中都涉及到处理捕获数据包的回调函数，该函数可以这样写：
+```python
+def packet_callbakc(win_pcap, param, header, pkt_data)
+    # pkt_data就是捕获到的数据，可以按字节的方式直接处理，
+    # 也可以使用dpkt包对pkt_data处理。
+```
+
+### WinPcapy发送数据
+目前，我使用到的方法是：
+```python
+def packet_send(self, pattern, packet_buffer, callback = None, limit = 10)
+```
+该函数参数`pattern`表示通配符，用来匹配`devices`中值所对应的内容，`packet_buffer`表示发送的数据，`callback`和`limit`参数没有使用过，个人看函数解释认为是回调处理反馈的数据包和捕获包的上限。
+在python3中，可以这样写：
+```python
+WinPcapUtils.packet_send("*Inte*", bytes.fromhex(data))
+```
+这里data实际上是十六进制数据，表示，我目前还只测试过将十六进制数据发，没有测试过其他类型。这里的`data`甚至可以这样写:
+```python
+data = "00010203"
+```
+通过抓包可以看到获取的数据是以太网数据头协议的包，长度只有4，和发出去的是一致的内容，通常，这里需要自己构造协议头。
+
+### WinPcapy发送数据例子
+
+### WinPcapy接收数据例子
