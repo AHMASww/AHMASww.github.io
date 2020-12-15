@@ -1,0 +1,10 @@
+---
+layout: post
+title:  "CAPPI原理"
+date:   2020-12-14 22:38:00 +0800
+categories: jekyll update
+---
+### CAPPI
+CAPPI是通过雷达扫描的基数据为基础，通过插值的方法获得某一高度的等高二维数据,从而分析某一高度的回波情况。
+
+#### 测高公式
