@@ -1,0 +1,284 @@
+---
+layout: post
+title: "PEP 8 - Python编码风格指导"
+data: 2021-01-26 09:16:00 +0800
+categories: jekyll update
+---
+# PEP 8 - Python编码风格指导
+
+## 声明
+
+本篇文章翻译自[PEP8](https://pep8.org/#designing-for-inheritance)。能力有限，翻译可能存在诸多意思不恰当甚至不正确的地方，还请谅解。如有侵权，立即删除。
+
+## 介绍
+
+本篇文档为现今主流python版本中代码编译标准库提供编码风格帮助。
+
+本篇文档和PEP257都是受Guido原始python编码风格论文的启发，其中以包含一些来自Barry的编码风格指导。
+
+此风格指导随着时间演变而被认定，过去的风格由于语言本身的变化而被舍弃。
+
+许多项目拥有它们自己的编码风格。在项目中的任何冲突，为项目特定的指导应优先考虑。
+
+## A Foolish Consistency is the Hobgoblin of Little Minds(保持适当的一致性？)
+
+Guido认为代码理解性重于书写。该指导手册致力于提升代码的可理解性并将一致性贯穿于Python代码的整个领域。正如PEP20所述，“可理解性第一”。
+
+风格指引有关于一致性，一致性在指引中是重要的，一致性在项目中尤为重要，一致性在模块中是最重要的。
+
+但是，需要知道什么时候去一致性——有时候风格指引推荐并不合适。当你陷入困难中，你应该自我判断。查询其他案例并决定哪种看起来最合适，不要犹豫去寻求帮助。
+
+重要提醒：不要打破向后兼容性来适应此篇PEP。
+
+一些其他好的理由去忽视特定的指引：
+
+1.当采取指引时会导致代码可理解性下降，即使是使用本篇PEP来阅读代码的人。
+
+2.为符合上下文代码风格而打破风格指引(可能是为了历史原因)——尽管这也是一个清除他人代码混乱的机会。
+
+3.当有问题的代码早于准则的引入，没有其他理由修改该代码。
+
+4.当代码需求保留旧版本Python一致性。
+
+## 编码布局
+
+### 缩排
+
+使用4个空格作为缩进的等级。
+
+```python
+# 与开始分隔符对齐
+foo = long_function_name(var_one, var_two,
+                         var_three, var_four)
+
+# 更多的缩进
+def long_function_name(
+        var_one, var_two, var_three,
+        var_four):
+    print(var_one)
+
+# 悬挂缩进应该增加一个等级
+foo = lon_funtion_name(
+    var_one, var_two,
+    var_three, var_four)
+```
+
+当`if-statement`条件语句较长而需求被写成多行时:
+
+```python
+# 没有额外缩进
+if (this_is_one_thing and
+    thia_is_another_thing):
+    do_something()
+
+# 添加额外缩进
+if (this_is_one_thing
+        and that_is_another_thing):
+    do_something()
+```
+
+多行中结束的括号`)`、`]`等可以另起一行，在第一个非空格符的字符处书写，或者在另起一行第一个字符处：
+
+```python
+my_list = [
+    1, 2, 3,
+    4, 5, 6,
+    ]
+
+my_list = [
+    1, 2, 3,
+    4, 5, 6,
+]
+```
+
+### 制表符还是空格符
+
+空格符在缩进中更受欢迎。
+
+Python3中不允许混用制表符和空格符来表示缩进。
+
+### 一行最长字符数
+
+限制一行最长字符数为79个字符。
+
+### 换行应在二元运算符前还是后
+
+数十年前推荐的风格还是换行在二元运算符后面，但是这样不利于阅读。
+
+```python
+# 不推荐的风格 
+income = (gross_wages +
+          taxable_interest +
+          (dividends - qualified_dividends) -
+          ira_deduction -
+          student_loan_interest)
+
+# 推荐的风格
+income = (gross_wages
+          + taxable_interest
+          + (dividends - qualified_dividends)
+          - ira_deduction
+          - student_loan_interest)
+```
+
+### 空行
+
+在top-level function(顶层函数？单独函数？)和类定义前后应空两行。
+
+在方法定义前后应空一行。
+
+方法内空行以区分逻辑。
+
+### Imports
+
+导入通常是单独分开的行。
+
+```python
+import os
+import sys
+```
+
+导入永远在文件的顶层，只在模块叙述文档之后，但应在模块全局变量和常量之前。同时导入的数据应该如下：
+1.标准库导入
+
+2.相关第三方库导入
+
+3.本地特定文件导入
+
+同时，对于上面三组导入之间应插入一个空行。
+
+绝对导入时推荐的，相对导入能多作为一种可选项。
+
+类似`from <module> import *`应该避免，因为这样可能会引起命名空间中命名冲突，引发混乱。
+
+## 语句和表达式中的空格符
+
+### 避免无关的空格符
+
+```python
+# 不推荐
+spam( ham[ 1 ], { eggs: 2 } )
+
+# 推荐
+spam(han[1], {eggs: 2})
+
+# 不推荐
+bar = (0, )
+
+# 推荐
+foo = (0,)
+
+# 不推荐
+if x == 4 : print x , y ; x , y = y , x
+
+# 推荐
+if x == 4: print x, y; x, y = y, x
+```
+
+但是，在切片操作中，冒号更像是二元运算符，冒号两边应拥有相同的空格数
+
+```python
+# 不推荐
+ham[lower + offset:upper + offset]
+ham[1: 9], ham[1 :9], ham[1:9 + 3]
+ham[lower : : upper]
+ham[ : upper]
+
+# 推荐
+ham[1:9], ham[1:9:3], ham[:9:3], ham[1::9]
+ham[lower:upper], ham[lower:upper:], ham[lower::step]
+ham[lower+offset : upper+offset]
+ham[: upper_fn(x) : step_fn(x)], ham[:: step_fn(x)]
+ham[lower + offset : upper + offset]
+```
+
+不要在方法关键值赋值或者默认参数值中等号两边使用空格符：
+
+```python
+# 不推荐
+def com(real, imag = 0.0):
+    return magic(r = real, i = image)
+
+# 推荐
+def com(real, imag=0.0)：
+    return magic(r=real, i=imag)
+```
+
+## 什么时候使用trailing commas(后置逗号？)
+
+Trailing commas通常是可选的，除非是在表示单个元素的元组的时候才是强制的。为了语义清晰，推荐在后括号附近添加。
+
+```python
+# 不推荐
+FILES = 'setup.cfg',
+
+# 推荐
+FILES = ('setup.cfg',)
+
+# 不推荐
+FILES = ['setup.cfg', 'tox.ini',]
+initialize(FILES, error=True,)
+
+# 推荐
+FILES = [
+    'setup.cfg',
+    'tox.ini',
+    ]
+initialzie(FILES,
+           error=True,
+           )
+```
+
+## 命名习惯
+
+新的模块和包应该按照三个原则：
+
+### 优先原则：
+
+对用户而言，命名是可见的，所以API应该能表现出用途。
+
+### 命名风格：
+
+以下命名风格是具有区分性的：
+
+```python
+b # 单个小写字母
+B # 单个大写字母
+lowercase
+lower_case_with_underscores
+UPPERCASE
+UPPER_CASE_WITH_UNDERSCORES
+CapitalizedWords
+mixedCase
+Capitalized_Words_With_Underscores # 丑陋的
+```
+
+### 约定俗成的命名风格
+
+#### 避免的命名
+
+单独字符名称不要使用'l'，'O'，'i'。
+
+#### 包和模块命名
+
+模块命名应当具有短的，全小写的名称。下划线可以使用在模块名称中如何这提升了可理解性。Python包也应当使用短的，全小写的名称，但不推荐使用下划线。
+
+#### 类命名
+
+类命名通常应该使用CapWords的方式。方法函数的命名类似于函数。
+
+#### 异常命名
+
+因为异常也是类，所以异常的命名类似于类。
+
+#### 全局变量名
+
+此处全局变量名只用于该模块中单独模块中，命名方式类似于方法。
+
+#### 方法参数
+
+类内方法永远将`self`作为第一个参数，类方法永远将`cls`作为第一个参数。当参数和保留关键字冲突的时候，加上一个后置下划线，这比缩略参数名要好。
+
+#### 常量
+
+常量是定义在模块层面的，通常使用全大写字母和下划线组成。
