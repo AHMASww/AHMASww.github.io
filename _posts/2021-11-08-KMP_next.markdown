@@ -37,7 +37,7 @@ void GetNext(char* str, int* next)
 
 ## 个人理解
 
-![kmp](../_photos/kmp_next.png)
+![kmp](https://github.com/AHMASww/AHMASww.github.io/blob/master/_photos/kmp_next.png)
 
 整体过程是顺序求解，利用过去的结果计算现在的结果，动态规划的思想。`k`就意味着在`j`位置是最长前缀后缀字符串之外需要比较的第一个字母(注意字符串起始位置从0开始)。
 
