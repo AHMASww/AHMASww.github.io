@@ -96,6 +96,7 @@ void msgqueue_put(void *msg, msgqueue_t *queue)
 综上所述`**put_tail`实现的一个链表结构。
 
 ### `signal/broadcast`在持有锁和不持有锁的情况下
-在`msgqueue_put()`中`signal`在不持有锁的情况下唤醒线程，在`__msgqueue_swap()`中是在持有锁的情况下唤醒线程的，这个
-等待理解明白再补充。
+在`msgqueue_put()`中`signal`在不持有锁的情况下唤醒线程，在`__msgqueue_swap()`中是在持有锁的情况下唤醒线程的，按照个
+人理解，先释放锁可能使得其他线程获得锁，而有条件锁的线程会进一步等待，直到获得其他线程释放的锁。似乎在可预测性上比较
+困难。
 
