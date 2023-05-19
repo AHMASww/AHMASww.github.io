@@ -1,0 +1,141 @@
+---
+layout: post
+title: "c++ lua 部分调用接口"
+date: 2023-05-19 13:30:00 +0800
+categories: jekyll update
+---
+
+## c++调用lua部分接口说明
+
+### lua内容
+
+```lua
+MyGlobalVari1 = 1024
+MyGlobalVari2 = 2048
+MyTable = { first = 1, second = "second" }
+```
+
+### `statckDump(lua_State* L)`
+
+显示栈`L`中的值
+
+```c++
+static void statckDump(lua_State* L)
+{
+    std::cout << "\nbegin dump lua stack" << std::endl;
+    int i = 0;
+    int top = lua_gettop(L);
+    for (i = 1; i <= top; ++i) {
+        int t = lua_type(L, i);
+        switch (t) {
+            case LUA_TSTRING: {
+                printf("'%s' ", lua_tostring(L, i));
+            }
+                break;
+            case LUA_TBOOLEAN: {
+                printf(lua_toboolean(L, i) ? "true " : "false ");
+            }
+                break;
+            case LUA_TNUMBER: {
+                printf("%g ", lua_tonumber(L, i));
+            }
+                break;
+            default: {
+                printf("%s ", lua_typename(L, t));
+            }
+                break;
+        }
+    }
+    std::cout << "\nend dump lua stack" << std::endl;
+}
+```
+
+### 编译
+
+```
+g++ target.cpp -llua -std=c++11
+```
+
+### `int lua_getglobal(lua_State* L, const char* name)`
+
+获取Lua程序中全局变量`name`的值并将其压入栈`L`中，返回值是该值的类型。
+
+```c++
+statckDump(L);
+lua_getglobal(L, "MyGlobalVari2");
+statckDump(L);
+```
+
+结果
+```
+begin dump lua stack
+
+end dump lua stack
+
+begin dump lua stack
+2048 
+end dump lua stack
+```
+
+### `void lua_setglobal (lua_State *L, const char *name)`
+
+将栈`L`顶的值赋值给`name`中，并弹出栈顶。
+
+```c++
+lua_pushnumber(L, 5096);
+lua_setglobal(L, "MyGlobalVari1");
+statckDump(L);
+lua_getglobal(L, "MyGlobalVari1");
+statckDump(L);
+```
+
+结果
+```
+begin dump lua stack
+
+end dump lua stack
+
+begin dump lua stack
+5096 
+end dump lua stack
+```
+
+### `int lua_getfield (lua_State *L, int index, const char *k)`
+
+获取栈`L[index]`所指的table中的key为`k`的值，并压入栈顶。
+
+```c++
+lua_getglobal(L, "MyTable");
+statckDump(L);
+lua_getfield(L, -1, "first");
+statckDump(L);
+```
+
+结果
+```
+begin dump lua stack
+table 
+end dump lua stack
+
+begin dump lua stack
+table 1 
+end dump lua stack
+```
+
+### `void lua_setfield (lua_State *L, int index, const char *k)`
+
+将栈`L`顶的值赋值给`L[index]`所指的table的key为`k`的值，并将栈顶弹出。
+
+```c++
+lua_pushnumber(L, 11);
+lua_setfield(L, -2, "first");
+lua_getfield(L, -1, "first");
+statckDump(L);
+```
+
+结果
+```
+begin dump lua stack
+table 11 
+end dump lua stack
+```
