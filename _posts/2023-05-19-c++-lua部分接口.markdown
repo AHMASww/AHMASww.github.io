@@ -139,3 +139,15 @@ begin dump lua stack
 table 11 
 end dump lua stack
 ```
+
+### `void lua_sethook (lua_State *L, lua_Hook f, int mask, int count)`
+
+设置一个调试用钩子函数。`lua_Hook f`是钩子函数。
+
+mask:
+|值|含义|
+--
+|`LUA_MASKCALL`|在调用一个函数时候调用，钩子将于Lua进入一个新函数后，函数获取参数前被调用|
+|`LUA_MASKRET`|钩子将于 Lua 离开函数之前的那一刻被调用|
+|`LUA_MASKLINE`|开始执行新的一行代码时， 或是跳转到这行代码中时（即使在同一行内跳转）被调用。|
+|`LUA_MASKCOUNT`|每执行 count 条指令后被调用, `int count`此时才有意义|

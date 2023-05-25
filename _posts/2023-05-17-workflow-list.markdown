@@ -12,7 +12,7 @@ list是workflow中使用的具有头结点的单向链表和双向链表。
 
 普通节点和头结点
 ```c++
-sturct slist_node {
+struct slist_node {
     struct slist_node *next;
 }
 
