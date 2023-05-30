@@ -51,3 +51,29 @@ static inline void slist_add_tail(struct slist_node *node
 #### `__slist_splice`
 
 ### 双向链表 doubly linked list
+
+#### 结点
+
+```c++
+struct list_head {
+    struct list_head *next, *prev;
+}
+```
+
+#### `INIT_LIST_HEAD` 头结点初始化
+
+TODO
+![init-list-head](https://github.com/AHMASww/AHMASww.github.io/blob/master/_photos/)
+
+#### `__list_add` `list_add`和`list_add_tail`
+
+`__list_add`是通用添加节点的方式,`list_add`是特化在头结点后添加节点(即栈的模式)，`list_add_tail`是特化在末尾添加节点
+(即队列的模式)。
+
+TODO
+![list-add](https://github.com/AHMASww/AHMASww.github.io/blob/master/_photos/)
+![list-add-tail](https://github.com/AHMASww/AHMASww.github.io/blob/master/_photos/)
+
+#### `__list_del` `list_move`和`list_move_tail`
+
+通用删除节点方式，删除前后两个节点之间的节点。
