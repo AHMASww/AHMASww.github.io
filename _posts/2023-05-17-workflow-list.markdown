@@ -64,7 +64,7 @@ struct list_head {
 
 #### `INIT_LIST_HEAD` 头结点初始化
 
-![init-list-head](https://github.com/AHMASww/AHMASww.github.io/blob/master/_photos/init_list_head.png)
+![init-list-head](https://github.com/AHMASww/AHMASww.github.io/blob/master/_photos/list_init.png)
 
 #### `__list_add` `list_add`和`list_add_tail`
 
