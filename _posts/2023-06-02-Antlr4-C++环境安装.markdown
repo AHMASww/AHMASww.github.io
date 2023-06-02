@@ -1,0 +1,74 @@
+---
+layout: post
+title: "Antlr4 C++ Linux 环境安装"
+date: 2023-06-02 15:35:00 +0800
+categories: jekyll update
+---
+
+# Antlr4 C++ Linux 环境安装
+
+## Antlr4简介
+
+Antlr4是一个强大的开源语法分析工具。
+
+## antlr4-XX-complete.jar
+
+Antlr4是有Java语言编写的，哪怕是使用Antlr4用来生成其他语言(C++, Python...)，也需要首先安装Java。
+```
+sudo apt install openjdk-19-jdk
+```
+需要下载antlr4-XX-complete.jar(本文写时安装的4.13.0版本)，该jar包包含了运行Antlr的工具和编译。如果使用Java语言，到此环境基本完成了。
+
+## antlr4-cpp-runtime-XX
+
+如果使用C++语言，需要安装antlr4-cpp-runtime-XX的环境。在官网[https://www.anltr.org/download.html]找到`C++ Target`，
+下载源码antlr4-cpp-runtime-XX-source.zip。
+
+### 编译安装
+
+```
+unzip antlr4-cpp-runtime-4.13.0-source.zip ./antlr-cpp-runtime/
+cd antlr4-cpp-runtime-4.13.0-source
+mkdir build
+cd build
+cmake ..
+make
+sudo make install
+```
+
+`note`需要注意的是，安装实在`/usr/local/include/antlr4-runtime/`下的，可能和后来antlr4生成后类文件找不到对应的头文件，
+可以将`/usr/local/include/antlr4-runtime/`的文件拷贝出来。
+```
+sudo cp -r /usr/local/include/antlr4-runtime/* /usr/local/include/
+```
+至此C++环境安装完成。
+
+## 简单测试
+
+编写g4文件
+```g
+grammar Hello;
+
+r
+    : 'hello' ID
+    ;
+
+ID
+    : [a-zA-z]+
+    ;
+
+WS
+    : [ \t\r\n] -> skip
+    ;
+```
+
+生成对应Cpp文件
+```
+java -jar antlr4-4.13.0-complete.jar -Dlanguage=Cpp Hello.g4
+```
+
+按照`antl4-cpp-runtime/demo/Linux/`下样例编写自己的main.cpp调用主文件。需要注意的是最后parser部分的调用的方法是自己定义
+的规则，不能照抄。写完编译，执行文件。
+```
+g++ ./*.cpp -lantlr4-runtime
+```
