@@ -82,3 +82,16 @@ struct list_head {
 #### `__list_splice` `list_splice` `list_splice_init`
 
 TODO
+
+#### `list_entry`
+
+```c++
+#define list_entry(prt, type, member) \
+    (((type *)((char *)(ptr)-(unsigned long)(&((type *)0)->member)))
+```
+在`Executor`中有一处使用
+```c++
+struct ExecSessionEntry *entry;
+...
+entry = list_entry(queue->session_list.next, struct ExecSessionEntry, list);
+```
