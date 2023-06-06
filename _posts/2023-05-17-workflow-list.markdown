@@ -6,7 +6,14 @@ categories: jekyll update
 ---
 
 ## 简介
-list是workflow中使用的具有头结点的单向链表和双向链表。
+list是workflow中使用的具有头结点的单向链表和双向链表。无论是单项链表还是双向链表都是只有指针而没有具体的数据项，实际
+使用的时候都需要加上数据项，例如
+```c++
+struct test_node{
+    struct slist_node;
+    int test_node_data;
+}
+```
 
 ### 单向链表 Single-linked list
 
@@ -44,6 +51,80 @@ static inline void slist_add_tail(struct slist_node *node
 ```
 
 ![slist-add-tail](https://github.com/AHMASww/AHMASww.github.io/blob/master/_photos/slist_add_tail.png)
+
+测试程序
+```c++
+#include <iostream>
+
+#include "list.h"
+
+// single list
+struct myListNode
+{
+    struct slist_node node;
+    int val;
+    
+    myListNode()
+    {
+        node.next = nullptr;
+        val = -1;
+    }
+
+    myListNode(int _val)
+    {
+        node.next = nullptr;
+        val = _val;
+    }
+};
+
+void echoList(slist_head* head)
+{
+    slist_node* pos = nullptr;
+    slist_for_each(pos, head)
+        std::cout << ((myListNode*)pos)->val << " ";
+    std::cout << std::endl;
+}
+
+
+int main(int argc, char** argv)
+{
+    slist_head head1, head2;
+    INIT_SLIST_HEAD(&head1);
+    INIT_SLIST_HEAD(&head2);
+
+    // build head1
+    for (int i = 0; i < 5; ++i)
+    {
+        myListNode* newNode = new myListNode(i);
+        slist_add_head(&newNode->node, &head1);
+    }
+    // echo head1
+    std::cout << "head1 : " << std::endl;
+    echoList(&head1);
+
+    // build head2
+    for (int i = 5; i < 10; ++i)
+    {
+        myListNode* newNode = new myListNode(i);
+        slist_add_tail(&newNode->node, &head2);
+    }
+    // echo head2
+    std::cout << "head2 : " << std::endl;
+    echoList(&head2);
+
+    // TODO free memory
+
+    return 0;
+}
+```
+
+结果
+```
+head1 :
+4 3 2 1 0
+head2 :
+5 6 7 8 9
+```
 
 #### `slist_del_afer`和`slist_del_head`
 类似`slist_add_after`和`slist_add_head`
