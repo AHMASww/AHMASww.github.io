@@ -105,5 +105,75 @@ union 是一个用户定义类型，其中所有成员都共享同一个内存�
 
 每个时钟的当前值都可以通过使用`clock_gettime(2)`去检索。
 
-从Linux2.6.27版本开始，`timerfd_create`中用以改变行为的参数`flags`是为
+从Linux2.6.27版本开始，`timerfd_create`中用以改变行为的参数`flags`是位宽的下述值。
+
+`TFD_NONBLOCK` 在新打开的文件描述符设置`O_NONBLOCK`文件描述标识，使用该标识将节省额外的`fcntl(2)`调用来达到相同结果。
+
+`TFD_CLOEXEC` 在新的文件描述符设置`close-on-exec(FD_CLOEXEC)`文件描述标识，查询设置`O_CLOEXEC`标识的理由可以查看`open(2
+)`。
+
+Linux版本2.6.26以前(包括2.6.26)，`flag`必须被设置为0。
+
+#### `timerfd_settime()`
+
+`timerfd_settime()`通过文件描述符开始或停止定时器。
+
+定时器中的`new_value`参数用来表示失效时间和间隔时间。`itimer`结构体包含使用`timespec`结构体两部分。
+
+```c++
+struct timespec {
+    time_t  tv_sec;                 /* Seconds */
+    long    tv_nsec;                /* Nanoseconds */
+};
+
+struct itimerspec {
+    struct timespec it_interval;    /* Interval for periodic timer */
+    struct timespec it_value;       /* Initial expiration */
+};
+```
+
+`new_value.it_value`用秒和纳秒来表示定时器初始失效时间。`new_value.it_value`任意一部分不为0值开始定时器，两部分都为0值
+停止定时器。
+
+设置`new_value.it_interval`非0值用来表示自初始失效期后重复定时器的周期。如果该值为0，该定时器在`new_value.it_value`定时
+的时间上仅失效一次。通常来讲，初始失效时间是和调用定时器时钟的当前时间相关联(即`new_value.it_value`表示的时间适合当前的
+`clockid`的值相关联)。可以通过`flags`参数选择一个绝对超时时间。
+
+`flags`是一个下述值的位掩码：
+
+`TFD_TIMER_ABSTIME` 将`new_value.it_value`解释为一个在定时器上的绝对值。该定时器将在到达这个值设定的值上失效。
+
+`TFD_TIMER_CANCEL_ON_SET` 如果该标识同时伴有`TFD_TIMER_ABSTIME`和时钟是`CLOCK_REALTIME`或者`CLOCK_REALTIME_ALARM`，标记
+该定时器为可取消的如果实时时钟接口不连续的变化。当该变化产生，可用`read(2)`从文件描述符读出`ECANCELED`错误。
+
+如果`old_value`参数非空，它`itimerspec`结构体返回之前定时器设置的失效值。后面`timerfd_gettime()`有描述。
+
+#### `timerfd_gettime()`
+
+`timerfd_gettime()`用`curr_value`参数返回和文件描述符`fd`相关的定时器设定的失效值。
+
+`it_value`用来表示到下一次失效时的总时间。如果两项值都是0，则表明该定时器当前是停止的。这项永远包含一个相对时间，不论是
+否`TFD_TIMER_ABSTIME`是否被设置。
+
+`it_interval`项用来返回定时器的间隔。如果值为0，说明定时器仅在`curr_value.it_value`表示的时间上失效一次。
+
+#### 时间文件描述符上的操作
+
+使用`timerfd_create()`返回的文件描述符支持下述操作：
+
+##### `read(2)`
+
+如果该定时器已经失效过一次或者多次自使用`timerfd_settime()`修改或者上次成功`read(2)`，那么`read(2)`返回的buffer返回8位
+无符号整数表示发生失效的次数。
+
+如果在使用`read(2)`没有定时器失效，将阻塞到下一个定时失效，或者返回错误`EAGAIN`当这些文件描述符被设置为非阻塞时。
+
+如果提供的buffer小于8个字节，`read(2)`将返回`EINVAL`错误。
+
+如果相关时钟是`CLOCK_REALTIME`或者`CLOCK_REALTIME_ALARM`，定时器是绝对的(`TFD_TIMER_ABSTIME`)并且标识是`TFD_TIMER_CANCE
+L_ON_SET`，`read(2)`将返回错误`ECANCELED`如果实时时钟接受不连续变化。如果标识不是`TFD_TIMER_CANCEL_ON_SET`，那么该始终
+拒绝不连续变化(即`clock_settime(2)`可能导致`read(2)`非阻塞，返回0值，if the clock change occurs after the time expired,
+but before the `read(2)` on the file descriptor)。
+
+#### `poll(2), select(2)`...
 
