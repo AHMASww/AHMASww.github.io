@@ -175,5 +175,190 @@ L_ON_SET`，`read(2)`将返回错误`ECANCELED`如果实时时钟接受不连续
 拒绝不连续变化(即`clock_settime(2)`可能导致`read(2)`非阻塞，返回0值，if the clock change occurs after the time expired,
 but before the `read(2)` on the file descriptor)。
 
-#### `poll(2), select(2)`...
+#### `poll(2), select(2)`
 
+当一个或多个该类型文件描述符发生失效时是可读的。该类型文件描述符也支持其他文件描述符的操作：`pselect(2)` `ppoll(2)` `epoll(2)`。
+
+#### `ioctl(2)`
+
+下述定时器指定命令是支持的：
+
+`TFD_TOC_SET_TICKS`(从Linux3.17开始) 调整已经发生定时器失效次数。这个参数指向一个非零8字节整数包含新的失效次数。一旦这个数字被设
+置，任何等待该定时器的将被唤醒。这个命令唯一的目的是还原过期以便完成还原点/还原的目的。这个操作应当内核被设置成`CONFIG_CHECKPOINT_
+RESTORE`时才是生效的。
+
+#### `close(2)`
+
+当该文件描述符不再被需要的时候应当关闭。当定时器关联的所有文件描述符都已经关闭时，定时器会被停止并将资源还给内核。
+
+#### `fork(2)`
+
+在`fork(2)`后，子进程将拷贝`timerfd_create()`创建的文件描述符。该文件描述符和父进程指向相同的定时器，且子进程中`read(2)`将返回定
+时器的失效信息。
+
+#### `execve(2)`
+
+由`timerfd_create()`产生的文件描述符将被保留在`execve(2)`，并且当定时器启动时将继续尝试失效。
+
+### 返回值(RETURN VALUE)
+
+成功的情况下将返回一个新的文件描述符，错误的情况下将返回-1并在erron中表明错误。
+
+`timerfd_settime()`和`timerfd_gettime()`成功的情况下返回0，错误的情况下返回-1并在errno中表明错误。
+
+### 错误(ERRORS)
+
+`timerfd_create()`错误有以下情况：
+
+EINVAL `clockid`参数既不是`CLOCK_MONOTONIC`也不是`CLOCK_REALTIME`；
+
+EINVAL `flags`参数非法或者在早于Linux2.6.26版本前该参数非0；
+
+EMFILE 到达预先设置的文件描述符数量上限；
+
+ENFILE 到达系统设置的文件描述符数量上限；
+
+ENODEV 不能挂载到匿名索引节点设备；
+
+ENOMEM 没有合适的内核内存来创造定时器。
+
+`timerfd_settime()`和`timerfd_gettime()`错误有以下情况：
+
+EBADF fd是非法的文件描述符；
+
+EFAULT `new_value` `old_value`或者`curr_value`非法指向；
+
+EINVAL fd是非法定时器文件描述符；
+
+`timerfd_settime()`也可以引发下列错误：
+
+EINVAL `new_value`没有正确设置;
+
+EINVAL `flags`非法。
+
+### 版本(VERSION)
+
+这些系统调用自Linux核心2.6.25。glibc支持自2.8。
+
+### 问题(BUGS)
+
+当前`timerfd_create()`支持的时钟种类少于`timerfd_create(2)`。
+
+### 例子(EXAMPLE)
+
+下面程序创建一个定事情并监视自身。该程序接受最多三个命令行参数。第一个参数表示初始失效的秒数。第二个参数表示间隔的秒数。第三个参数
+表示程序允许定时器在停止前的失效次数。第二个和第三个参数是可选的。
+
+下面是shell中调用程序的信息：
+
+```shell
+$ a.out 3 1 100
+0.000: timer started
+3.000: read: 1; total=1
+4.000: read: 1; total=2
+^Z                  # type control-Z to suspend the program
+[1]+  Stopped                 ./timerfd3_demo 3 1 100
+$ fg                # Resume execution after a few seconds
+a.out 3 1 100
+9.660: read: 5; total=7
+10.000: read: 1; total=8
+11.000: read: 1; total=9
+^C                  # type control-C to suspend the program
+```
+
+源码
+
+```c
+#include <sys/timerfd.h>
+#include <time.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>        /* Definition of uint64_t */
+
+#define handle_error(msg) \
+        do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
+static void
+print_elapsed_time(void)
+{
+    static struct timespec start;
+    struct timespec curr;
+    static int first_call = 1;
+    int secs, nsecs;
+
+    if (first_call) {
+        first_call = 0;
+        if (clock_gettime(CLOCK_MONOTONIC, &start) == -1)
+            handle_error("clock_gettime");
+    }
+
+    if (clock_gettime(CLOCK_MONOTONIC, &curr) == -1)
+        handle_error("clock_gettime");
+
+    secs = curr.tv_sec - start.tv_sec;
+    nsecs = curr.tv_nsec - start.tv_nsec;
+    if (nsecs < 0) {
+        secs--;
+        nsecs += 1000000000;
+    }
+    printf("%d.%03d: ", secs, (nsecs + 500000) / 1000000);
+}
+
+int
+main(int argc, char *argv[])
+{
+    struct itimerspec new_value;
+    int max_exp, fd;
+    struct timespec now;
+    uint64_t exp, tot_exp;
+    ssize_t s;
+
+    if ((argc != 2) && (argc != 4)) {
+        fprintf(stderr, "%s init-secs [interval-secs max-exp]\n",
+                argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    if (clock_gettime(CLOCK_REALTIME, &now) == -1)
+        handle_error("clock_gettime");
+
+    /* Create a CLOCK_REALTIME absolute timer with initial
+       expiration and interval as specified in command line */
+
+    new_value.it_value.tv_sec = now.tv_sec + atoi(argv[1]);
+    new_value.it_value.tv_nsec = now.tv_nsec;
+    if (argc == 2) {
+        new_value.it_interval.tv_sec = 0;
+        max_exp = 1;
+    } else {
+        new_value.it_interval.tv_sec = atoi(argv[2]);
+        max_exp = atoi(argv[3]);
+    }
+    new_value.it_interval.tv_nsec = 0;
+
+    fd = timerfd_create(CLOCK_REALTIME, 0);
+    if (fd == -1)
+        handle_error("timerfd_create");
+
+    if (timerfd_settime(fd, TFD_TIMER_ABSTIME, &new_value, NULL) == -1)
+        handle_error("timerfd_settime");
+
+    print_elapsed_time();
+    printf("timer started\n");
+
+    for (tot_exp = 0; tot_exp < max_exp;) {
+        s = read(fd, &exp, sizeof(uint64_t));
+        if (s != sizeof(uint64_t))
+            handle_error("read");
+
+        tot_exp += exp;
+        print_elapsed_time();
+        printf("read: %llu; total=%llu\n",
+                (unsigned long long) exp,
+                (unsigned long long) tot_exp);
+    }
+
+    exit(EXIT_SUCCESS);
+}
+```
